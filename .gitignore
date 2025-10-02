@@ -1,2 +1,5 @@
 /.idea/
 /aster-connector-python.iml
+
+.vscode/*
+*_python.egg-info/
