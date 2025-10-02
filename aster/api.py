@@ -103,7 +103,9 @@ class API(object):
                 "proxies": self.proxies,
             }
         )
-        response = self._dispatch_request(http_method)(**params)
+        #response = self._dispatch_request(http_method)(**params)
+        req_fn = self._dispatch_request(http_method)
+        response = req_fn(**params)
         logging.debug("raw response from server:" + response.text)
         self._handle_exception(response)
 

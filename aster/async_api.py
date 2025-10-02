@@ -35,8 +35,10 @@ class AsyncAPI(object):
         self._default_headers = {
             "Content-Type": "application/json;charset=utf-8",
             "User-Agent": "aster-connector/" + __version__,
-            "X-MBX-APIKEY": key,
         }
+        # Only set the API key header if a key is provided to avoid None header values
+        if key is not None:
+            self._default_headers["X-MBX-APIKEY"] = key
 
         if base_url:
             self.base_url = base_url
@@ -102,18 +104,27 @@ class AsyncAPI(object):
         url = self.base_url + url_path
         logging.debug("url: " + url)
 
-        query_string = self._prepare_params(payload, special)
-        if query_string:
-            separator = "&" if ("?" in url) else "?"
-            url = url + separator + query_string
+        # query_string = self._prepare_params(payload, special)
+        # if query_string:
+        #     separator = "&" if ("?" in url) else "?"
+        #     url = url + separator + query_string
+        
+        params = cleanNoneValue(
+            {
+                "url": url,
+                "params": self._prepare_params(payload, special),
+                "timeout": self.timeout,
+                "proxies": self.proxies,
+            }
+        )
 
         await self._ensure_session()
 
-        timeout = None
-        if self.timeout is not None:
-            timeout = aiohttp.ClientTimeout(total=self.timeout)
+        # timeout = None
+        # if self.timeout is not None:
+        #     timeout = aiohttp.ClientTimeout(total=self.timeout)
 
-        async with self._session.request(http_method, url, timeout=timeout) as response:
+        async with self._session.request(method=http_method, **params) as response:
             text = await response.text()
             logging.debug("raw response from server:" + text)
             await self._handle_exception(response, text)
