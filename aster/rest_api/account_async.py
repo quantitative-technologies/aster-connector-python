@@ -83,6 +83,10 @@ async def countdown_cancel_order(self, symbol: str, countdownTime: int, **kwargs
 async def get_open_orders(self, symbol: str, orderId: int = None, origClientOrderId: str = None, **kwargs):
     check_required_parameter(symbol, "symbol")
     params = {"symbol": symbol, **kwargs}
+    if orderId is not None:
+        params["orderId"] = orderId
+    if origClientOrderId is not None:
+        params["origClientOrderId"] = origClientOrderId
     url_path = "/fapi/v1/openOrder"
     return await self.sign_request("GET", url_path, params)
 
