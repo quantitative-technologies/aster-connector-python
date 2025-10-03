@@ -3,10 +3,14 @@ from aster.rest_api import Client
 from aster.lib.utils import config_logging
 from aster.error import ClientError
 
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 config_logging(logging, logging.DEBUG)
 
-key = ""
-secret = ""
+key = os.getenv("ASTER_KEY")
+secret = os.getenv("ASTER_SECRET")
 
 client = Client(key, secret,base_url="https://fapi.asterdex.com")
 

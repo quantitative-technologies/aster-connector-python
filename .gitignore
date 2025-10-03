@@ -1,2 +1,4 @@
 /.idea/
 /aster-connector-python.iml
+
+*.pyc
