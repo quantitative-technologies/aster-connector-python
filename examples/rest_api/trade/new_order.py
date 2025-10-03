@@ -3,15 +3,19 @@ from aster.rest_api import Client
 from aster.lib.utils import config_logging
 from aster.error import ClientError
 
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
 config_logging(logging, logging.DEBUG)
 
-key = ""
-secret = ""
+key = os.getenv("ASTER_KEY")
+secret = os.getenv("ASTER_SECRET")
 
 client = Client(key, secret, base_url="https://fapi.asterdex.com")
 
 try:
-    response = client.new_order(symbol="BTCUSDT", side = "SELL", type= "LIMIT", quantity= 0.001, timeInForce="GTC", price= 59808.02)
+    response = client.new_order(symbol="BTCUSDT", side = "BUY", type= "LIMIT", quantity= 0.001, timeInForce="GTC", price= 59808.0)
     logging.info(response)
 except ClientError as error:
     logging.error(
