@@ -12,11 +12,12 @@ config_logging(logging, logging.DEBUG)
 key = os.getenv("ASTER_KEY")
 secret = os.getenv("ASTER_SECRET")
 client_order_id = "387feb054fd5e2249f00f0fc02fd9f6b"
+symbol = "SOLUSDT"
 
 client = Client(key, secret, base_url="https://fapi.asterdex.com")
 
 try:
-    response = client.cancel_order(symbol = "BTCUSDT", origClientOrderId=client_order_id, recvWindow=2000)
+    response = client.cancel_order(symbol = symbol, origClientOrderId=client_order_id, recvWindow=2000)
     logging.info(response)
 except ClientError as error:
     logging.error(
