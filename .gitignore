@@ -1,6 +1,8 @@
 /.idea/
 /aster-connector-python.iml
 
+.env
+
 .vscode/*
 
 *_python.egg-info/
