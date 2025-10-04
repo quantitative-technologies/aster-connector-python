@@ -1,15 +1,20 @@
 import time
 import logging
 from aster.lib.utils import config_logging
-from aster.rest_api import Futures as Client
+from aster.rest_api import Client
 from aster.websocket.client.stream import WebsocketClient
+
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 config_logging(logging, logging.DEBUG)
 
 def message_handler(message):
     print(message)
 
-api_key = ""
+api_key = os.getenv("ASTER_KEY")
+
 client = Client(api_key)
 response = client.new_listen_key()
 
