@@ -29,7 +29,7 @@ ws_client.user_data(
     callback=message_handler,
 )
 
-time.sleep(30)
+time.sleep(60)
 
 logging.debug("closing ws connection")
 ws_client.stop()

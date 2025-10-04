@@ -2,6 +2,9 @@
 import logging
 from aster.rest_api import Client
 from aster.lib.utils import config_logging
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 from dotenv import load_dotenv
 import os
