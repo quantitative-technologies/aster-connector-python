@@ -6,3 +6,4 @@ config_logging(logging, logging.DEBUG)
 
 client = Client()
 logging.info(client.ticker_price("BTCUSDT"))
+#logging.info(client.ticker_price())
