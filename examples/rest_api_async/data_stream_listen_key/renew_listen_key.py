@@ -13,9 +13,10 @@ async def main():
     key = os.getenv("ASTER_KEY")
     client = AsyncClient(key, base_url="https://fapi.asterdex.com")
     try:
-        listen_key = await client.new_listen_key()
-        renewed_key = await client.renew_listen_key(listen_key)
-        logging.info(f"Listen key renewed successfully: {renewed_key}")
+        response = await client.new_listen_key()
+        listen_key = response["listenKey"]
+        await client.renew_listen_key(listen_key)
+        logging.info(f"Listen key {listen_key} renewed successfully")
     finally:
         await client.close()
 
