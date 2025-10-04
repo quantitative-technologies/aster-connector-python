@@ -1,12 +1,17 @@
-#!/usr/bin/env python
 import logging
 import asyncio
+import websockets
 from aster.rest_api import AsyncClient
 from aster.lib.utils import config_logging
 
 from dotenv import load_dotenv
 import os
 
+stream_url = "wss://fstream.asterdex.com/ws/"
+
+async def handler(msg):
+    await asyncio.sleep(0.01)
+    print(msg)
 
 async def main():
     load_dotenv()
@@ -16,13 +21,16 @@ async def main():
     try:
         response = await client.new_listen_key()
         listen_key = response["listenKey"]
-        await client.renew_listen_key(listen_key)
-        logging.info(f"Listen key {listen_key} renewed successfully")
+        logging.info(f"Listen key {listen_key} created successfully")
+
+        while True:
+            async with websockets.connect(stream_url + listen_key) as s:
+                while True:
+                    msg = await s.recv()
+                    await handler(msg)
     finally:
         await client.close()
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
