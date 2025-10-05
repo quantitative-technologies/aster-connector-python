@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import time
 import websockets
 from aster.rest_api import AsyncClient
 from aster.lib.utils import config_logging
@@ -11,6 +12,7 @@ stream_url = "wss://fstream.asterdex.com/ws/"
 
 async def handler(msg):
     await asyncio.sleep(0.01)
+    print(f"Message received @ {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}:")
     print(msg)
 
 async def main():
