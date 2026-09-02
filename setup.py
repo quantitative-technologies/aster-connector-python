@@ -12,7 +12,9 @@ DESCRIPTION = (
 )
 AUTHOR = ""
 URL = "https://github.com/asterdex/aster-connector-python"
-VERSION = "1.1.0"
+# Read from aster/__version__.py so the packaged version and the version
+# reported in the User-Agent header cannot drift apart.
+VERSION = None
 
 about = {}
 

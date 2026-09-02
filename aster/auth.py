@@ -73,14 +73,17 @@ class HmacAuth(object):
     def headers(self):
         return {"X-MBX-APIKEY": self.key} if self.key is not None else {}
 
+    def hmac_hex(self, data):
+        """HMAC-SHA256 of ``data`` under the API secret, hex encoded."""
+        return hmac.new(
+            self.secret.encode("utf-8"), data.encode("utf-8"), hashlib.sha256
+        ).hexdigest()
+
     def sign(self, url_path, params, special=False):
         """Return ``(url_path, params)`` with timestamp and signature added."""
         params = dict(params or {})
         params["timestamp"] = get_timestamp()
-        query_string = encoded_string(cleanNoneValue(params), special)
-        params["signature"] = hmac.new(
-            self.secret.encode("utf-8"), query_string.encode("utf-8"), hashlib.sha256
-        ).hexdigest()
+        params["signature"] = self.hmac_hex(encoded_string(cleanNoneValue(params), special))
         return url_path, params
 
 

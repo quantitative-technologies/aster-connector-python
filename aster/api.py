@@ -135,6 +135,11 @@ class API(object):
     def _prepare_params(self, params, special=False):
         return encoded_string(cleanNoneValue(params),special)
 
+    def _get_sign(self, data):
+        """Deprecated: HMAC-SHA256 of ``data``. Retained so V1 subclasses that
+        called or overrode this helper keep working; V3 has no HMAC step."""
+        return self.auth.hmac_hex(data)
+
     def _dispatch_request(self, http_method):
         return {
             "GET": self.session.get,
