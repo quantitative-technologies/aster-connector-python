@@ -152,9 +152,10 @@ async def get_position_risk(self, **kwargs):
     return await self.sign_request("GET", url_path, params)
 
 
-async def get_account_trades(self, symbol: str, **kwargs):
-    check_required_parameter(symbol, "symbol")
-    params = {"symbol": symbol, **kwargs}
+async def get_account_trades(self, symbol: str = None, **kwargs):
+    params = {**kwargs}
+    if symbol is not None:
+        params["symbol"] = symbol
     url_path = "/fapi/v1/userTrades"
     return await self.sign_request("GET", url_path, params)
 
