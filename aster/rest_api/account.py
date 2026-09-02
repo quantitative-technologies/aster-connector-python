@@ -358,19 +358,21 @@ def get_position_risk(self, **kwargs):
     return self.sign_request("GET", url_path, params)
 
 
-def get_account_trades(self, symbol: str, **kwargs):
+def get_account_trades(self, symbol: str = None, **kwargs):
     """
     |
     | **Account Trade List (USER_DATA)**
-    | *Get trades for a specific account and symbol.*
+    | *Get trades for an account, optionally restricted to one symbol.*
+    | *When symbol is omitted the endpoint returns trades across all symbols.*
 
     :API endpoint: ``GET /fapi/v1/userTrades``
     :API doc: https://github.com/asterdex/api-docs/blob/master/aster-finance-api.md#account-trade-list-user_data
     |
     """
 
-    check_required_parameter(symbol, "symbol")
-    params = {"symbol": symbol, **kwargs}
+    params = {**kwargs}
+    if symbol is not None:
+        params["symbol"] = symbol
     url_path = "/fapi/v1/userTrades"
     return self.sign_request("GET", url_path, params)
 
