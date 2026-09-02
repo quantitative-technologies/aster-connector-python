@@ -33,10 +33,10 @@ from eth_account.messages import encode_typed_data
 
 KEY = "a" * 64
 SECRET = "b" * 64
-# Throwaway key; only ever used to sign locally and recover the address back.
-ACCOUNT = Account.from_key(
-    "0x4fd0a42218f3eae43a6ce26d22544e986139a01e5b34a62db53757ffca81bae1"
-)
+# Derived at test time rather than checked in: signing is verified by
+# recovering the address, never against a recorded signature, and a literal
+# private key in the tree trips secret scanners for no benefit.
+ACCOUNT = Account.from_key(hashlib.sha256(b"aster v3 signing tests").digest())
 SIGNER = ACCOUNT.address
 PRIVATE_KEY = ACCOUNT.key.hex()
 
