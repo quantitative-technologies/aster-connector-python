@@ -1,15 +1,13 @@
 import sys
 
-import hmac
 import json
 import logging
-import hashlib
 from json import JSONDecodeError
 
 import requests
 from .__version__ import __version__
+from aster.auth import V3, HmacAuth
 from aster.error import ClientError, ServerError
-from aster.lib.utils import get_timestamp
 from aster.lib.utils import cleanNoneValue
 from aster.lib.utils import encoded_string
 from aster.lib.utils import check_required_parameter
@@ -25,9 +23,11 @@ class API(object):
         proxies=None,
         show_limit_usage=False,
         show_header=False,
+        auth=None,
     ):
         self.key = key
         self.secret = secret
+        self.auth = auth if auth is not None else HmacAuth(key=key, secret=secret)
         self.timeout = timeout
         self.show_limit_usage = False
         self.show_header = False
@@ -37,7 +37,7 @@ class API(object):
             {
                 "Content-Type": "application/json;charset=utf-8",
                 "User-Agent": "aster-connector/" + __version__,
-                "X-MBX-APIKEY": key,
+                **self.auth.headers(),
             }
         )
 
@@ -65,12 +65,7 @@ class API(object):
         return self.send_request(http_method, url_path, payload=payload)
 
     def sign_request(self, http_method, url_path, payload=None, special=False):
-        if payload is None:
-            payload = {}
-        payload["timestamp"] = get_timestamp()
-        query_string = self._prepare_params(payload, special)
-        signature = self._get_sign(query_string)
-        payload["signature"] = signature
+        url_path, payload = self.auth.sign(url_path, payload or {}, special)
         return self.send_request(http_method, url_path, payload, special)
 
     def limited_encoded_sign_request(self, http_method, url_path, payload=None):
@@ -82,11 +77,12 @@ class API(object):
 
         so we have to append those parameters in the url
         """
-        if payload is None:
-            payload = {}
-        payload["timestamp"] = get_timestamp()
+        if self.auth.scheme == V3:
+            return self.sign_request(http_method, url_path, payload)
+        payload = dict(payload or {})
+        _, payload = self.auth.sign(url_path, payload)
+        signature = payload.pop("signature")
         query_string = self._prepare_params(payload)
-        signature = self._get_sign(query_string)
         url_path = url_path + "?" + query_string + "&signature=" + signature
         return self.send_request(http_method, url_path)
 
@@ -138,10 +134,6 @@ class API(object):
 
     def _prepare_params(self, params, special=False):
         return encoded_string(cleanNoneValue(params),special)
-
-    def _get_sign(self, data):
-        m = hmac.new(self.secret.encode("utf-8"), data.encode("utf-8"), hashlib.sha256)
-        return m.hexdigest()
 
     def _dispatch_request(self, http_method):
         return {

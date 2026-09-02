@@ -38,6 +38,10 @@ setup(
     url=URL,
     keywords=["Aster", "Public API"],
     install_requires=[req for req in requirements],
+    extras_require={
+        # V3 (Pro API) signing only; V1 installs stay free of the web3 stack.
+        "v3": ["eth-account>=0.10.0"],
+    },
     packages=find_packages(exclude=("tests",)),
     classifiers=[
         "Intended Audience :: Developers",
