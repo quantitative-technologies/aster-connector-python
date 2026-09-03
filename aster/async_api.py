@@ -1,14 +1,13 @@
-import hmac
 import json
 import logging
-import hashlib
 from json import JSONDecodeError
 
 import aiohttp
+from yarl import URL
 
 from .__version__ import __version__
+from aster.auth import V3, HmacAuth
 from aster.error import ClientError, ServerError
-from aster.lib.utils import get_timestamp
 from aster.lib.utils import cleanNoneValue
 from aster.lib.utils import encoded_string
 from aster.lib.utils import check_required_parameter
@@ -24,9 +23,11 @@ class AsyncAPI(object):
         proxies=None,
         show_limit_usage=False,
         show_header=False,
+        auth=None,
     ):
         self.key = key
         self.secret = secret
+        self.auth = auth if auth is not None else HmacAuth(key=key, secret=secret)
         self.timeout = timeout
         self.show_limit_usage = False
         self.show_header = False
@@ -36,9 +37,8 @@ class AsyncAPI(object):
             "Content-Type": "application/json;charset=utf-8",
             "User-Agent": "aster-connector/" + __version__,
         }
-        # Only set the API key header if a key is provided to avoid None header values
-        if key is not None:
-            self._default_headers["X-MBX-APIKEY"] = key
+        # Only set identifying headers the scheme actually uses, to avoid None values
+        self._default_headers.update(self.auth.headers())
 
         if base_url:
             self.base_url = base_url
@@ -73,12 +73,7 @@ class AsyncAPI(object):
         return await self.send_request(http_method, url_path, payload=payload)
 
     async def sign_request(self, http_method, url_path, payload=None, special=False):
-        if payload is None:
-            payload = {}
-        payload["timestamp"] = get_timestamp()
-        query_string = self._prepare_params(payload, special)
-        signature = self._get_sign(query_string)
-        payload["signature"] = signature
+        url_path, payload = self.auth.sign(url_path, payload or {}, special)
         return await self.send_request(http_method, url_path, payload, special)
 
     async def limited_encoded_sign_request(self, http_method, url_path, payload=None):
@@ -90,11 +85,12 @@ class AsyncAPI(object):
 
         so we have to append those parameters in the url
         """
-        if payload is None:
-            payload = {}
-        payload["timestamp"] = get_timestamp()
+        if self.auth.scheme == V3:
+            return await self.sign_request(http_method, url_path, payload)
+        payload = dict(payload or {})
+        _, payload = self.auth.sign(url_path, payload)
+        signature = payload.pop("signature")
         query_string = self._prepare_params(payload)
-        signature = self._get_sign(query_string)
         url_path = url_path + "?" + query_string + "&signature=" + signature
         return await self.send_request(http_method, url_path)
 
@@ -111,7 +107,7 @@ class AsyncAPI(object):
         
         params = cleanNoneValue(
             {
-                "url": url,
+                "url": self._request_url(url),
                 "params": self._prepare_params(payload, special),
                 "timeout": self.timeout,
                 "proxies": self.proxies,
@@ -160,8 +156,19 @@ class AsyncAPI(object):
         return encoded_string(cleanNoneValue(params), special)
 
     def _get_sign(self, data):
-        m = hmac.new(self.secret.encode("utf-8"), data.encode("utf-8"), hashlib.sha256)
-        return m.hexdigest()
+        """Deprecated: HMAC-SHA256 of ``data``. Retained so V1 subclasses that
+        called or overrode this helper keep working; V3 has no HMAC step."""
+        return self.auth.hmac_hex(data)
+
+    def _request_url(self, url):
+        """Hand aiohttp the exact bytes when the query is already signed.
+
+        A V3 signature covers the urlencoded query verbatim, so the query must
+        reach the wire unmodified; yarl would otherwise re-quote it.
+        """
+        if self.auth.scheme == V3 and "?" in url:
+            return URL(url, encoded=True)
+        return url
 
     async def _handle_exception(self, response, text=None):
         status_code = response.status

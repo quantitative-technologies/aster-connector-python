@@ -8,3 +8,8 @@
 *_python.egg-info/
 __pycache__/
 *.pyc
+
+# Build output
+build/
+dist/
+*.egg-info/

@@ -12,7 +12,9 @@ DESCRIPTION = (
 )
 AUTHOR = ""
 URL = "https://github.com/asterdex/aster-connector-python"
-VERSION = "1.1.0"
+# Read from aster/__version__.py so the packaged version and the version
+# reported in the User-Agent header cannot drift apart.
+VERSION = None
 
 about = {}
 
@@ -38,6 +40,10 @@ setup(
     url=URL,
     keywords=["Aster", "Public API"],
     install_requires=[req for req in requirements],
+    extras_require={
+        # V3 (Pro API) signing only; V1 installs stay free of the web3 stack.
+        "v3": ["eth-account>=0.10.0"],
+    },
     packages=find_packages(exclude=("tests",)),
     classifiers=[
         "Intended Audience :: Developers",

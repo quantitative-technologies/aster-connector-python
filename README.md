@@ -47,6 +47,57 @@ Please find `examples` folder to check for more endpoints.
 ### Base URL
 `https://fapi.asterdex.com`
 
+This host serves both the legacy `/fapi/v1`, `/fapi/v2` routes and the Pro API
+`/fapi/v3` routes. The `fapi3.asterdex.com` host that appears in some official
+code samples is not reachable.
+
+### Authentication: V1 and V3
+
+Two schemes coexist and are selected explicitly, never inferred from the shape
+of a credential.
+
+**V1 (legacy)** signs with HMAC-SHA256 over the API secret and is the default,
+so existing code is unchanged:
+
+```python
+from aster.rest_api import AsyncClient
+
+client = AsyncClient(key=api_key, secret=api_secret)
+```
+
+**V3 (Pro API)** signs an EIP-712 envelope with an API wallet's private key.
+AsterDex issues new credentials as Pro API wallets, so new accounts need this:
+
+```python
+from aster.rest_api import AsyncClientV3
+
+# `key`/`secret` are the API wallet address and its private key. `signer` and
+# `private_key` are accepted as explicit aliases.
+client = AsyncClientV3(key=api_wallet_address, secret=api_wallet_private_key)
+```
+
+`AsyncClientV3` exposes the same method names as `AsyncClient` over `/fapi/v3`
+routes, so call sites do not change. V3 requires the `v3` extra:
+
+```bash
+pip install "aster-connector-python[v3]"
+```
+
+`user` (the master account wallet address) is optional -- the exchange
+authenticates agent-signed `TRADE`, `USER_DATA` and `USER_STREAM` requests from
+the signer alone -- and is carried as an opaque string, so a Solana master
+account needs no Ed25519 signing:
+
+```python
+client = AsyncClientV3(key=..., secret=..., user=master_wallet_address)
+```
+
+Requests carry a microsecond `nonce`. The exchange tracks nonces per agent
+address and keeps only the most recent 100, so nonces are generated from a
+strictly increasing counter shared across every client in the process.
+Clock skew is rejected as `-1000 Signature check failed` rather than as a
+nonce error, so keep the system clock synchronised.
+
 ### Optional parameters
 
 PEP8 suggests _lowercase with words separated by underscores_, but for this connector,
